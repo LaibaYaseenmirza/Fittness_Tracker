@@ -1,0 +1,596 @@
+package FitnessTracker;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.sql.PreparedStatement;
+import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+class User {
+    private String name;
+    private String email;
+    private double height;
+    private double weight;
+    private Activity userActivity;
+
+    public User() {
+        this.userActivity = new Activity();
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setHeight(double height) {
+        this.height = height;
+    }
+
+    public void setWeight(double weight) {
+        this.weight = weight;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public double getHeight() {
+        return height;
+    }
+
+    public double getWeight() {
+        return weight;
+    }
+
+    public double calculateBMI() {
+        return weight / (height * height);
+    }
+
+    public void provideBMIFeedback() {
+        double bmi = calculateBMI();
+        System.out.println("Body Mass Index (BMI): " + bmi);
+
+        if (bmi < 18.5) {
+            System.out.println("Underweight");
+        } else if (bmi >= 18.5 && bmi < 25) {
+            System.out.println("Normal weight");
+        } else if (bmi >= 25 && bmi < 30) {
+            System.out.println("Overweight");
+        } else {
+            System.out.println("Obese");
+        }
+
+        double targetBMI = 22.5; // Standard BMI for good health
+
+        if (bmi < targetBMI) {
+            double improvementNeeded = targetBMI * (height * height) - weight;
+            System.out.println("To reach a healthy BMI, you need to gain approximately " + improvementNeeded + " kilograms.");
+        } else if (bmi > targetBMI) {
+            double improvementNeeded = weight - targetBMI * (height * height);
+            System.out.println("To reach a healthy BMI, you need to lose approximately " + improvementNeeded + " kilograms.");
+        } else {
+            System.out.println("Your BMI is within the healthy range. Keep up the good work!");
+        }
+    }
+
+    public void startActivity() {
+        userActivity.startActivity();
+    }
+
+    public void pauseActivity() {
+        userActivity.pauseActivity();
+    }
+
+    public void resumeActivity() {
+        userActivity.resumeActivity();
+    }
+
+    public void endActivity() {
+        userActivity.endActivity();
+    }
+
+    public void addActivity(String activity) {
+        userActivity.addActivity(activity);
+    }
+
+    public void displayActivities() {
+        userActivity.displayActivities();
+    }
+
+    public Activity getActivity() {
+        return userActivity;
+    }
+}
+
+class Reminder {
+    private String reminderText;
+
+    public Reminder(String reminderText) {
+        this.reminderText = reminderText;
+    }
+
+    public void showReminder() {
+        System.out.println("Reminder: " + reminderText);
+    }
+}
+
+class Goal {
+    private int goalId;
+    private String goalText;
+
+    public Goal(int goalId, String goalText) {
+        this.goalId = goalId;
+        this.goalText = goalText;
+    }
+
+    public int getGoalId() {
+        return goalId;
+    }
+
+    public String getGoalText() {
+        return goalText;
+    }
+        public void displayGoal() {
+        System.out.println("Goal: " + goalText);
+    }
+        public String toString() {
+        return goalText;
+    }
+}
+
+class Activity {
+    private ArrayList<String> activities;
+    private boolean isStarted;
+    private boolean isPaused;
+    private long startTime;
+    private long pauseTime;
+    private long endTime;
+
+    public Activity() {
+        this.activities = new ArrayList<>();
+        this.isStarted = false;
+        this.isPaused = false;
+        this.startTime = 0;
+        this.pauseTime = 0;
+        this.endTime = 0;
+    }
+
+    public void startActivity() {
+        if (!isStarted) {
+            isStarted = true;
+            startTime = System.currentTimeMillis();
+            System.out.println("Activity started.");
+        } else {
+            System.out.println("Activity is already started.");
+        }
+    }
+
+    public void pauseActivity() {
+        if (isStarted && !isPaused) {
+            isPaused = true;
+            pauseTime = System.currentTimeMillis();
+            System.out.println("Activity paused.");
+        } else {
+            System.out.println("Activity is not started or is already paused.");
+        }
+    }
+
+    public void resumeActivity() {
+        if (isStarted && isPaused) {
+            isPaused = false;
+            startTime += System.currentTimeMillis() - pauseTime;
+            pauseTime = 0;
+            System.out.println("Activity resumed.");
+        } else {
+            System.out.println("Activity is not started or is not paused.");
+        }
+    }
+
+    public void endActivity() {
+        if (isStarted) {
+            isStarted = false;
+            isPaused = false;
+            endTime = System.currentTimeMillis();
+            System.out.println("Activity ended. Duration: " + calculateActivityDuration() + " milliseconds");
+        } else {
+            System.out.println("Activity is not started.");
+        }
+    }
+
+    public void addActivity(String activity) {
+        if (isStarted && !isPaused) {
+            activities.add(activity);
+        } else {
+            System.out.println("Cannot add activity. Activity is not started or is paused.");
+        }
+    }
+
+    public void displayActivities() {
+        System.out.println("Activity Log:");
+        for (String activity : activities) {
+            System.out.println(activity);
+        }
+
+        if (isStarted) {
+            System.out.println("Activity is currently in progress.");
+        } else {
+            System.out.println("Activity duration: " + calculateActivityDuration() + " milliseconds");
+        }
+    }
+
+    private long calculateActivityDuration() {
+        if (isStarted) {
+            return System.currentTimeMillis() - startTime;
+        } else {
+            return endTime - startTime;
+        }
+    }
+
+    public boolean isStarted() {
+        return isStarted;
+    }
+
+    public long getStartTime() {
+        return startTime;
+    }
+
+    public long getEndTime() {
+        return endTime;
+    }
+}
+class DatabaseHandler{
+    String url="jdbc:mysql://localhost:3306/mydatabase";
+    String user="root";
+    String password="";
+    private Connection connection;
+   public DatabaseHandler() {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+  
+    public void connect() {
+        try {
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/mydatabase?zeroDateTimeBehavior=convertToNull","root","");
+            System.out.println("Connected to the database!");
+            createTable(); 
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+     public void disconnect() {
+        try {
+            if (connection != null && !connection.isClosed()) {
+                connection.close();
+                System.out.println("Disconnected from the database!");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+      private void createTable() {
+        String createTableQuery = "CREATE TABLE IF NOT EXISTS user (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                "name VARCHAR(255), " +
+                "email VARCHAR(255), " +
+                "height DOUBLE, " +
+                "weight DOUBLE)";
+        try (Statement statement = connection.createStatement()) {
+            statement.execute(createTableQuery);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+      public void insertUserData(String name, String email, double height, double weight) {
+        String insertQuery = "INSERT INTO user (name, email, height, weight) VALUES (?, ?, ?, ?)";
+
+        try (PreparedStatement preparedStatement = connection.prepareStatement(insertQuery)) {
+            preparedStatement.setString(1, name);
+            preparedStatement.setString(2, email);
+            preparedStatement.setDouble(3, height);
+            preparedStatement.setDouble(4, weight);
+ int rowsAffected = preparedStatement.executeUpdate();
+
+            if (rowsAffected > 0) {
+                System.out.println("User data inserted into the database successfully!");
+            } else {
+                System.out.println("Failed to insert user data into the database.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+       
+}
+public class FitnessTracker {
+    private static ArrayList<Goal> goals = new ArrayList<>();
+    private static User user = new User();
+
+    public static void main(String[] args) {
+        initializeGoals();
+        final JFrame frame = new JFrame("User Information");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(400, 300);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(5, 2));
+
+        final JTextField nameField = new JTextField();
+        final JTextField emailField = new JTextField();
+        final JTextField heightField = new JTextField();
+        final JTextField weightField = new JTextField();
+
+        JButton submitButton = new JButton("Submit");
+
+        final JLabel resultLabel = new JLabel();
+
+        panel.add(new JLabel("Name:"));
+        panel.add(nameField);
+        panel.add(new JLabel("Email:"));
+        panel.add(emailField);
+        panel.add(new JLabel("Height (in meters):"));
+        panel.add(heightField);
+        panel.add(new JLabel("Weight (in kilograms):"));
+        panel.add(weightField);
+        panel.add(submitButton);
+        panel.add(resultLabel);
+
+        frame.getContentPane().add(BorderLayout.CENTER, panel);
+        submitButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String name = nameField.getText();
+            String email = emailField.getText();
+            double height;
+            double weight;
+
+            if (isValidName(name)) {
+                user.setName(name);
+            } else {
+                JOptionPane.showMessageDialog(frame, "Invalid name format. Please use only alphabets.");
+                return;
+            }
+
+            if (isValidEmail(email)) {
+                user.setEmail(email);
+            } else {
+                JOptionPane.showMessageDialog(frame, "Invalid email format. Please enter a valid email address.");
+                return;
+            }
+
+            try {
+                height = Double.parseDouble(heightField.getText());
+                if (!isValidHeight(height)) {
+                    JOptionPane.showMessageDialog(frame, "Invalid height format. Please include a decimal point.");
+                    return;
+                }
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(frame, "Invalid height format. Please enter a valid number.");
+                return;
+            }
+
+            try {
+                weight = Double.parseDouble(weightField.getText());
+                if (!isValidWeight(weight)) {
+                    JOptionPane.showMessageDialog(frame, "Invalid weight format. Please enter a valid number.");
+                    return;
+                }
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(frame, "Invalid weight format. Please enter a valid number.");
+                return;
+            }
+
+
+              user.setHeight(height);
+            user.setWeight(weight);
+
+            double bmi = user.calculateBMI();
+            String bmiMessage = "Your BMI is: " + bmi;
+            DatabaseHandler dbHandler = new DatabaseHandler();
+        dbHandler.connect();
+        dbHandler.insertUserData(name, email, height, weight);
+        dbHandler.disconnect();
+
+            JOptionPane.showMessageDialog(frame, bmiMessage);
+
+            resultLabel.setText(bmiMessage);
+            Goal selectedGoal = chooseGoal(frame);
+            selectedGoal.displayGoal();
+            showActivityManagementGUI(selectedGoal);
+              
+            }
+        });
+
+        frame.setVisible(true);
+    }
+
+    private static void showActivityManagementGUI(Goal selectedGoal) {
+        final JFrame activityFrame = new JFrame("Activity Management - " + selectedGoal.getGoalText());
+        activityFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        activityFrame.setSize(500, 300);
+
+        JPanel activityPanel = new JPanel();
+        activityPanel.setLayout(new BoxLayout(activityPanel, BoxLayout.Y_AXIS));
+        JLabel goalLabel = new JLabel(selectedGoal.getGoalText());
+        activityPanel.add(goalLabel);
+
+        JButton startButton = new JButton("Start Activity");
+        JButton pauseButton = new JButton("Pause Activity");
+        JButton resumeButton = new JButton("Resume Activity");
+        JButton endButton = new JButton("End Activity");
+        
+        activityPanel.add(startButton);
+        activityPanel.add(pauseButton);
+        activityPanel.add(resumeButton);
+        activityPanel.add(endButton);
+
+        startButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JOptionPane.showMessageDialog(activityFrame, "Activity started.");
+            }
+        });
+
+        pauseButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JOptionPane.showMessageDialog(activityFrame, "Activity paused.");
+            }
+        });
+
+        resumeButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JOptionPane.showMessageDialog(activityFrame, "Activity resumed.");
+            }
+        });
+
+        endButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                user.endActivity();
+                JOptionPane.showMessageDialog(activityFrame, "Activity ended. Duration: " + calculateActivityDuration(user) + " milliseconds");
+                user.displayActivities();
+                 showReminderMessage("Drink water");
+            }
+        });
+        
+
+        
+
+        activityFrame.getContentPane().add(BorderLayout.CENTER, activityPanel);
+        activityFrame.setVisible(true);
+
+        Reminder waterReminder = new Reminder("Drink water every hour.");
+        Reminder exerciseReminder = new Reminder("Take a break and do some exercise.");
+
+        waterReminder.showReminder();
+        exerciseReminder.showReminder();
+    }
+
+    public static long calculateActivityDuration(User user) {
+        Activity userActivity = user.getActivity();
+        if (userActivity.isStarted()) {
+            return System.currentTimeMillis() - userActivity.getStartTime();
+        } else {
+            return userActivity.getEndTime() - userActivity.getStartTime();
+        }
+    }
+
+    private static boolean isValidName(String name) {
+        Pattern pattern = Pattern.compile("^[a-zA-Z]+$");
+        Matcher matcher = pattern.matcher(name);
+        return matcher.matches();
+    }
+
+    private static boolean isValidEmail(String email) {
+        Pattern pattern = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}$");
+        Matcher matcher = pattern.matcher(email);
+        return matcher.matches();
+    }
+
+    private static boolean isValidHeight(double height) {
+        String heightString = String.valueOf(height);
+        Pattern pattern = Pattern.compile("\\.");
+        Matcher matcher = pattern.matcher(heightString);
+        return matcher.find();
+    }
+
+    private static boolean isValidWeight(double weight) {
+        String weightString = String.valueOf(weight);
+        Pattern pattern = Pattern.compile("^[0-9]+(?:\\.[0-9]+)?$");
+        Matcher matcher = pattern.matcher(weightString);
+        return matcher.matches();
+    }
+    private static void showGoalsFrame() {
+        final JFrame goalsFrame = new JFrame("Fitness Goals");
+        goalsFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        goalsFrame.setSize(400, 300);
+
+        JPanel goalsPanel = new JPanel();
+        goalsPanel.setLayout(new GridLayout(10, 1));
+
+        for (Goal goal : goals) {
+            JLabel goalLabel = new JLabel(goal.getGoalText());
+            goalsPanel.add(goalLabel);
+        }
+
+        goalsFrame.getContentPane().add(BorderLayout.CENTER, goalsPanel);
+        goalsFrame.setVisible(true);
+    }
+    private static void initializeGoals() {
+        for (int i = 1; i <= 10; i++) {
+            switch (i) {
+        case 1:
+            goals.add(new Goal(i, "Run 5 kilometers in under 30 minutes."));
+            break;
+        case 2:
+            goals.add(new Goal(i, "Complete 100 push-ups in a single workout."));
+            break;
+        case 3:
+            goals.add(new Goal(i, "Achieve a 2-minute plank."));
+            break;
+        case 4:
+            goals.add(new Goal(i, "Cycle 20 kilometers in one session."));
+            break;
+        case 5:
+            goals.add(new Goal(i, "Perform 50 bodyweight squats continuously."));
+            break;
+        case 6:
+            goals.add(new Goal(i, "Swim 500 meters without stopping."));
+            break;
+        case 7:
+            goals.add(new Goal(i, "Complete a 30-minute high-intensity interval training (HIIT) workout."));
+            break;
+        case 8:
+            goals.add(new Goal(i, "Master the yoga pose 'Crow Pose' for 1 minute."));
+            break;
+        case 9:
+            goals.add(new Goal(i, "Climb 50 flights of stairs in one workout."));
+            break;
+        case 10:
+            goals.add(new Goal(i, "Achieve a deadlift of 1.5 times your body weight."));
+            break;
+        default:
+            goals.add(new Goal(i, "Sample Goal " + i));
+        }
+    }
+        
+        
+        }
+    private static Goal chooseGoal(JFrame parentFrame) {
+        JList<Goal> goalList = new JList<>(goals.toArray(new Goal[0]));
+        goalList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        JScrollPane scrollPane = new JScrollPane(goalList);
+
+        int result = JOptionPane.showConfirmDialog(parentFrame, scrollPane, "Choose a Goal",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (result == JOptionPane.OK_OPTION) {
+            return goalList.getSelectedValue();
+        } else {
+            
+            return goals.get(0);
+        }
+    }
+    private static void showReminderMessage(String reminderText) {
+    JOptionPane.showMessageDialog(null, "Reminder: " + reminderText);
+}
+    }
